@@ -6,10 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { FirebaseService } from '../services/firebaseService';
 import { getExpenseCategories } from '../utils/helpers';
 import { Expense } from '../types/expense';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { UserDetails } from '../types/UserDetails';
-import { uid } from 'chart.js/helpers';
 
 interface ScannerProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
@@ -168,10 +164,12 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
   };
 
   try {
-    const expenseRef = doc(collection(db, 'users', user.uid, 'expenses'));
-    await setDoc(expenseRef, expenseData);
-    console.log('Expense saved:', expenseData);
+    // Delegate the actual persistence to the parent component (App) so that
+    // all data is saved consistently via FirebaseService.addExpense. This keeps
+    // all expense documents in the top-level `expenses` collection that the rest
+    // of the application subscribes to.
     onAddExpense(expenseData);
+    console.log('Expense saved via callback:', expenseData);
     resetScanner();
     console.log('Scanned data:', scannedData);
   } catch (err) {

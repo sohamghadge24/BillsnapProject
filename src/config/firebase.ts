@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyCWIEmexFXPXjxcdDT8RsPgpnCIqYxwnhE",
   authDomain: "billsnap-1313f.firebaseapp.com",
   projectId: "billsnap-1313f",
-  storageBucket: "billsnap-1313f.firebasestorage.app",
+  storageBucket: "billsnap-1313f.appspot.com",
   messagingSenderId: "407545439206",
   appId: "1:407545439206:web:48b82d1d81e6b6eab16c27",
   measurementId: "G-6B4SPJLVEQ"

@@ -7,6 +7,11 @@ export interface Expense {
   category: string;
   date: string;
   receipt: string | null;
+  storeName?: string;
+  subtotal?: number;
+  tax?: number;
+  total?: number;
+  time?: string;
   userId?: string;
   createdAt?: any;
   updatedAt?: any;
