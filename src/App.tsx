@@ -1,3 +1,5 @@
+// File: src/App.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { ExpenseList } from './components/ExpenseList';
@@ -9,8 +11,16 @@ import { AuthForm } from './components/AuthForm';
 import { Expense } from './types/expense';
 import { FirebaseService } from './services/firebaseService';
 import { useAuth } from './context/AuthContext';
+import Profile from './domo file/profile'; // 👈 Added Profile view
 
-export type View = 'dashboard' | 'expenses' | 'scanner' | 'reports';
+import { Routes, Route } from 'react-router-dom';
+import Login from './components/Login';
+import Register from './components/Register';
+
+
+
+// 👇 Add 'profit' to the View type
+export type View = 'dashboard' | 'expenses' | 'scanner' | 'reports' | 'profile' ;
 
 function App() {
   const {
@@ -70,19 +80,17 @@ function App() {
     }
   };
 
-  // Show auth form if not logged in and not loading
   if (!currentUser && !loading) {
     return (
       <AuthForm
         onSignIn={login}
-        onSignUp={login} // replace with `signUp` if you separate login/signup logic
+        onSignUp={login}
         loading={loading}
         error={null}
       />
     );
   }
 
-  // Show loading spinner
   if (loading || !currentUserDetails) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -94,7 +102,7 @@ function App() {
     );
   }
 
-  // Render selected view
+  // 👇 Handle which view to show
   const renderCurrentView = () => {
     if (expensesLoading) {
       return (
@@ -122,6 +130,8 @@ function App() {
         return <Scanner onAddExpense={addExpense} />;
       case 'reports':
         return <Reports expenses={expenses} />;
+      case 'profile':
+        return <Profile />; // 👈 Render Profile component
       default:
         return <Dashboard expenses={expenses} />;
     }
@@ -134,7 +144,7 @@ function App() {
         onViewChange={setCurrentView}
         onAddExpense={() => setIsAddModalOpen(true)}
         onLogout={logout}
-        userEmail={currentUserDetails.email}
+        userEmail={currentUserDetails?.email}
       />
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
@@ -146,9 +156,14 @@ function App() {
         onClose={() => setIsAddModalOpen(false)}
         onAddExpense={addExpense}
       />
+      <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      {/* Optional: Redirect or dashboard */}
+    </Routes>
     </div>
+    
   );
 }
 
 export default App;
-
