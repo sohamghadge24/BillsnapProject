@@ -10,9 +10,9 @@ import {
   Plus,
   LogOut,
   User,
+  PiggyBank,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import {profit} from '../domo file/profile';
 
 interface NavigationProps {
   currentView: View;
@@ -29,12 +29,12 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const { currentUserDetails } = useAuth();
 
-  const navItems = [
-    { id: 'dashboard' as View, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'expenses' as View, label: 'Expenses', icon: Receipt },
-    { id: 'scanner' as View, label: 'Scanner', icon: Scan },
-    { id: 'reports' as View, label: 'Reports', icon: FileText },
-    
+  const navItems: { id: View; label: string; icon: React.ElementType }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'expenses', label: 'Expenses', icon: Receipt },
+    { id: 'scanner', label: 'Scanner', icon: Scan },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'Budget', label: 'Budget', icon: PiggyBank },
   ];
 
   return (
@@ -48,8 +48,8 @@ export const Navigation: React.FC<NavigationProps> = ({
               <h1 className="text-xl font-bold text-gray-900">ExpenseTracker</h1>
             </div>
 
-            {/* Desktop Nav */}
-            <div className="hidden items-center md:flex space-x-2">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-2">
               {navItems.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -78,15 +78,15 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
 
             <button
-                onClick={() => onViewChange('profile')}
-                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-                title="View Profile"
-              >
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {currentUserDetails?.name || 'User'}
-                </span>
-              </button>
+              onClick={() => onViewChange('profile')}
+              className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+              title="View Profile"
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {currentUserDetails?.name || 'User'}
+              </span>
+            </button>
 
             <button
               onClick={onLogout}
@@ -98,7 +98,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
         </div>
 
-        {/* Mobile Nav */}
+        {/* Mobile Navigation */}
         <div className="md:hidden border-t border-gray-200 pt-2 pb-4">
           <div className="flex space-x-1 overflow-x-auto">
             {navItems.map(({ id, label, icon: Icon }) => (

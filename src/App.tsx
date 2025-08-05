@@ -1,5 +1,3 @@
-// File: src/App.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { ExpenseList } from './components/ExpenseList';
@@ -11,16 +9,14 @@ import { AuthForm } from './components/AuthForm';
 import { Expense } from './types/expense';
 import { FirebaseService } from './services/firebaseService';
 import { useAuth } from './context/AuthContext';
-import Profile from './domo file/profile'; // 👈 Added Profile view
-
-import { Routes, Route } from 'react-router-dom';
+import Profile from './domo file/profile';
 import Login from './components/Login';
 import Register from './components/Register';
+import {Budget} from './components/Budget';
 
+import { Routes, Route } from 'react-router-dom';
 
-
-// 👇 Add 'profit' to the View type
-export type View = 'dashboard' | 'expenses' | 'scanner' | 'reports' | 'profile' ;
+export type View = 'dashboard' | 'expenses' | 'scanner' | 'reports' | 'profile' | 'Budget';
 
 function App() {
   const {
@@ -31,6 +27,7 @@ function App() {
     logout,
   } = useAuth();
 
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -102,7 +99,6 @@ function App() {
     );
   }
 
-  // 👇 Handle which view to show
   const renderCurrentView = () => {
     if (expensesLoading) {
       return (
@@ -131,7 +127,10 @@ function App() {
       case 'reports':
         return <Reports expenses={expenses} />;
       case 'profile':
-        return <Profile />; // 👈 Render Profile component
+        return <Profile expenses={expenses} monthlyIncome={monthlyIncome} />;
+
+      case 'Budget':
+        return <Budget expenses={expenses} />;
       default:
         return <Dashboard expenses={expenses} />;
     }
@@ -156,13 +155,12 @@ function App() {
         onClose={() => setIsAddModalOpen(false)}
         onAddExpense={addExpense}
       />
+
       <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      {/* Optional: Redirect or dashboard */}
-    </Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
     </div>
-    
   );
 }
 

@@ -1,5 +1,3 @@
-// src/context/AuthContext.tsx
-
 import React, {
   createContext,
   useContext,
@@ -16,9 +14,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
-import { UserDetails } from '../types/UserDetails';
+import { UserDetails, UserProfile } from '../types/UserDetails';
 
-// Context type
 interface AuthContextType {
   currentUser: User | null;
   currentUserDetails: UserDetails | null;
@@ -30,7 +27,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Props for the provider
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -40,7 +36,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUserDetails, setCurrentUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔍 Load Firestore user details
   const fetchUserDetails = async (
     uid: string,
     setUserDetails: (data: UserDetails | null) => void
@@ -51,11 +46,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (userSnap.exists()) {
         const data = userSnap.data();
+
+        const profile: UserProfile | undefined = data.profile
+          ? {
+              fullName: data.profile.fullName || '',
+              username: data.profile.username || '',
+              bio: data.profile.bio || '',
+              phone: data.profile.phone || '',
+              website: data.profile.website || '',
+              social: {
+                linkedin: data.profile.social?.linkedin || '',
+                twitter: data.profile.social?.twitter || '',
+              },
+              joinDate: data.profile.joinDate || '',
+              lastActive: data.profile.lastActive || '',
+              role: data.profile.role || '',
+            }
+          : undefined;
+
         const userDetails: UserDetails = {
           name: data.Name || data.name || '',
           email: data.Email || data.email || '',
           uid: uid,
           expenses: data.expenses || [],
+          profile,
         };
 
         console.log('[AuthProvider] Fetched user data:', userDetails);
@@ -70,7 +84,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // 🔐 Login method
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
@@ -83,18 +96,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // 🆕 Signup method
   const signup = async (email: string, password: string): Promise<boolean> => {
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
       setCurrentUser(result.user);
 
-      // Create user document in Firestore on first registration
+      const defaultProfile: UserProfile = {
+        fullName: '',
+        username: '',
+        bio: '',
+        phone: '',
+        website: '',
+        social: {
+          linkedin: '',
+          twitter: '',
+        },
+        joinDate: new Date().toLocaleDateString(),
+        lastActive: new Date().toLocaleTimeString(),
+        role: 'User',
+      };
+
       const newUserDetails: UserDetails = {
         name: '',
         email: result.user.email || '',
         uid: result.user.uid,
         expenses: [],
+        profile: defaultProfile,
       };
 
       const userDocRef = doc(db, 'User', result.user.uid);
@@ -108,7 +135,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // 🔓 Logout method
   const logout = async () => {
     try {
       await signOut(auth);
@@ -119,7 +145,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // 🧠 Auto-login listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
@@ -143,7 +168,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// 🪝 Custom hook
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

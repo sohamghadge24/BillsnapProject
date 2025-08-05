@@ -4,26 +4,29 @@ import Tesseract from 'tesseract.js';
 import { UploadCloud } from 'lucide-react';
 
 interface UploadScannerProps {
-  onExtract: (imageDataUrl: string, text: string) => void;
-  onError: (error: string) => void;
+  onScanned: (data: { image: string; text: string }) => void;
 }
 
-const UploadScanner: React.FC<UploadScannerProps> = ({ onExtract, onError }) => {
+const UploadScanner: React.FC<UploadScannerProps> = ({ onScanned }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const dropRef = useRef<HTMLLabelElement>(null);
 
   const handleFile = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const imageDataUrl = e.target?.result as string;
+      setLoading(true);
+      setError(null);
       try {
-        const worker = await Tesseract.createWorker('eng', 1);
-        const { data: { text } } = await worker.recognize(imageDataUrl);
-        await worker.terminate();
-        onExtract(imageDataUrl, text);
+        const { data: { text } } = await Tesseract.recognize(imageDataUrl, 'eng');
+        onScanned({ image: imageDataUrl, text });
       } catch (err) {
         console.error('OCR Error:', err);
-        onError('Image processing failed. Try another photo.');
+        setError('Image processing failed. Please try a different image.');
+      } finally {
+        setLoading(false);
       }
     };
     reader.readAsDataURL(file);
@@ -73,6 +76,9 @@ const UploadScanner: React.FC<UploadScannerProps> = ({ onExtract, onError }) => 
           <p className="text-xs text-gray-500">Only PNG, JPG, JPEG accepted</p>
         </div>
       </label>
+
+      {loading && <p className="text-sm text-blue-600">Processing image...</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 };

@@ -35,7 +35,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ expenses }) => {
   });
   const lastMonthTotal = lastMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-  const monthlyChange = lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 : 0;
+  const monthlyChange = lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / totalExpenses) * 100 : 0;
 
   // Category data for charts
   const categoryData: Record<string, CategoryData> = {};
