@@ -3,20 +3,27 @@
 
 # Smart Expense Management App with Firebase
 
-A comprehensive expense tracking application with receipt scanning capabilities, built with React, TypeScript, Tailwind CSS, and Firebase.
 
-## Features
+A comprehensive expense tracking application with receipt scanning capabilities, built with **React**, **TypeScript**, **Tailwind CSS**, and **Firebase**.
 
-- **Firebase Authentication**: Secure user authentication with email/password
-- **Real-time Data Sync**: Expenses are synchronized in real-time using Firestore
-- **Receipt Scanning**: Camera and file upload functionality with automatic data extraction
-- **Receipt Storage**: Uploaded receipts are stored in Firebase Storage
-- **Interactive Dashboard**: Charts and analytics showing spending patterns
-- **Expense Management**: Add, edit, delete, and categorize expenses
-- **Advanced Filtering**: Search and filter expenses by category, date, and keywords
-- **Reports & Analytics**: Detailed spending reports with visual charts
-- **Export Functionality**: Export data to CSV and JSON formats
-- **Responsive Design**: Optimized for mobile, tablet, and desktop devices
+**🚀 Live Demo:** [https://billsnap-project.vercel.app](https://billsnap-project.vercel.app)
+
+---
+
+## ✨ Features
+
+- 🔐 **Firebase Authentication**: Secure user authentication with email/password
+- 🔄 **Real-time Data Sync**: Expenses are synchronized in real-time using Firestore
+- 📷 **Receipt Scanning**: Camera and file upload functionality with automatic data extraction
+- ☁ **Receipt Storage**: Uploaded receipts are stored in Firebase Storage
+- 📈 **Interactive Dashboard**: Charts and analytics showing spending patterns
+- 📝 **Expense Management**: Add, edit, delete, and categorize expenses
+- 🔍 **Advanced Filtering**: Search and filter expenses by category, date, and keywords
+- 📊 **Reports & Analytics**: Detailed spending reports with visual charts
+- 📤 **Export Functionality**: Export data to CSV and JSON formats
+- 📱 **Responsive Design**: Optimized for mobile, tablet, and desktop devices
+
+---
 
 ## Setup Instructions
 
