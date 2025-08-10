@@ -84,7 +84,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">
-                {currentUserDetails?.name || 'User'}
+                {currentUserDetails?.profile?.fullName || 'User'}
               </span>
             </button>
 

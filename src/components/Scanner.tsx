@@ -8,7 +8,6 @@ import { Expense } from '../types/expense';
 import UploadScanner from './UploadScanner';
 import CameraScanner from './CameraScanner';
 
-
 interface ScannerProps {
   onAddExpense: (expense: Omit<Expense, 'id'>) => void;
 }
@@ -29,22 +28,24 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
   const extractData = (text: string) => {
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
     const amountRegex = /(\d+\.\d{2})/g;
-    const amounts = lines.flatMap(line => [...line.matchAll(amountRegex)].map(m => parseFloat(m[1])));
+    const amounts = lines.flatMap(line =>
+      [...line.matchAll(amountRegex)].map(m => parseFloat(m[1]))
+    );
     const amount = amounts.length ? Math.max(...amounts) : 0;
 
     const storeName = lines[0] || 'Unknown Store';
-    const description = lines.join('\n');
+    const description = `${storeName}\n${lines.join('\n')}`;
 
     const dateMatch = text.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/);
     const date = dateMatch?.[1] || new Date().toISOString().split('T')[0];
 
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       amount,
       description,
       category: 'Other',
       date
-    });
+    }));
   };
 
   const handleScanned = ({ image, text }: { image: string; text: string }) => {
@@ -56,23 +57,17 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
   const handleSave = async () => {
     if (!currentUser) return;
     try {
-      const expenseId = await FirebaseService.addExpense(currentUser.uid, {
+      // ✅ Only add expense, no image upload
+      await FirebaseService.addExpense({
         ...formData,
-        receipt: ''
+        receipt: '' // leave empty
       });
 
-      if (scannedImage) {
-        const blob = await (await fetch(scannedImage)).blob();
-        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-
-        const receiptUrl = await FirebaseService.uploadReceipt(file, currentUser.uid, expenseId);
-        await FirebaseService.updateExpense(expenseId, { receipt: receiptUrl });
-      }
-
+      // Pass new expense back to parent
       onAddExpense({ ...formData, receipt: '' });
       reset();
     } catch (err) {
-      console.error('Error saving:', err);
+      console.error('Error saving expense:', err);
     }
   };
 
@@ -112,14 +107,22 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
         </div>
       )}
 
-      {mode === 'camera' && <CameraScanner onScanned={(data) => console.log('OCR Result:', data.text)} />
-}
-      {mode === 'upload' && <UploadScanner onScanned={handleScanned} />}
+      {mode === 'camera' && (
+        <CameraScanner onScanned={handleScanned} />
+      )}
+
+      {mode === 'upload' && (
+        <UploadScanner onScanned={handleScanned} />
+      )}
 
       {scannedImage && (
         <div className="grid md:grid-cols-2 gap-6 pt-6">
           <div>
-            <img src={scannedImage} alt="Scanned" className="w-full rounded-lg border" />
+            <img
+              src={scannedImage}
+              alt="Scanned"
+              className="w-full rounded-lg border"
+            />
           </div>
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Extracted Data</h3>
@@ -128,19 +131,25 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
               className="w-full border p-2 rounded"
               placeholder="Amount"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: parseFloat(e.target.value) })
+              }
             />
             <textarea
               className="w-full border p-2 rounded"
               placeholder="Description"
               rows={4}
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
             />
             <select
               className="w-full border p-2 rounded"
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
             >
               {getExpenseCategories().map((cat) => (
                 <option key={cat}>{cat}</option>
@@ -150,14 +159,22 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
               type="date"
               className="w-full border p-2 rounded"
               value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
             />
 
             <div className="flex gap-4 pt-4">
-              <button onClick={handleSave} className="flex-1 bg-green-600 text-white p-2 rounded hover:bg-green-700">
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-green-600 text-white p-2 rounded hover:bg-green-700"
+              >
                 <Check className="inline w-5 h-5 mr-2" /> Save
               </button>
-              <button onClick={reset} className="flex-1 bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300">
+              <button
+                onClick={reset}
+                className="flex-1 bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300"
+              >
                 <X className="inline w-5 h-5 mr-2" /> Cancel
               </button>
             </div>
@@ -167,4 +184,3 @@ export const Scanner: React.FC<ScannerProps> = ({ onAddExpense }) => {
     </div>
   );
 };
-
