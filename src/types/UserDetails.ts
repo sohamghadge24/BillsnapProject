@@ -1,7 +1,7 @@
 // File: src/types/UserDetails.ts
 
 export interface UserDetails {
-  name: string;
+  name: UserProfile['fullName'];
   email: string;
   uid: string;
   expenses?: any[]; 
@@ -21,4 +21,5 @@ export interface UserProfile {
   joinDate: string;
   lastActive: string;
   role: string;
+  monthlyIncome: number; // ✅ no question mark here
 }

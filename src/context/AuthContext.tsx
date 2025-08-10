@@ -1,3 +1,4 @@
+// File: src/context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUserDetails, setCurrentUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user details from Firestore
   const fetchUserDetails = async (
     uid: string,
     setUserDetails: (data: UserDetails | null) => void
@@ -48,26 +50,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = userSnap.data();
 
         const profile: UserProfile | undefined = data.profile
-          ? {
-              fullName: data.profile.fullName || '',
-              username: data.profile.username || '',
-              bio: data.profile.bio || '',
-              phone: data.profile.phone || '',
-              website: data.profile.website || '',
-              social: {
-                linkedin: data.profile.social?.linkedin || '',
-                twitter: data.profile.social?.twitter || '',
-              },
-              joinDate: data.profile.joinDate || '',
-              lastActive: data.profile.lastActive || '',
-              role: data.profile.role || '',
-            }
-          : undefined;
+  ? {
+      fullName: data.profile.fullName || '',
+      username: data.profile.username || '',
+      bio: data.profile.bio || '',
+      phone: data.profile.phone || '',
+      website: data.profile.website || '',
+      social: {
+        linkedin: data.profile.social?.linkedin || '',
+        twitter: data.profile.social?.twitter || '',
+      },
+      joinDate: data.profile.joinDate || '',
+      lastActive: data.profile.lastActive || '',
+      role: data.profile.role || '',
+      monthlyIncome: data.profile.monthlyIncome || 0, // ← ADD THIS LINE
+    }
+  : undefined;
+
 
         const userDetails: UserDetails = {
           name: data.Name || data.name || '',
           email: data.Email || data.email || '',
-          uid: uid,
+          uid,
           expenses: data.expenses || [],
           profile,
         };
@@ -75,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('[AuthProvider] Fetched user data:', userDetails);
         setUserDetails(userDetails);
       } else {
-        console.warn(`[AuthProvider] No user profile in Firestore for UID: ${uid}`);
+        console.warn('[AuthProvider] No user profile in Firestore for UID: ${uid}');
         setUserDetails(null);
       }
     } catch (error) {
@@ -114,6 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         joinDate: new Date().toLocaleDateString(),
         lastActive: new Date().toLocaleTimeString(),
         role: 'User',
+        monthlyIncome: 0,
       };
 
       const newUserDetails: UserDetails = {

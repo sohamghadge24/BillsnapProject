@@ -5,7 +5,7 @@ import { AuthForm } from '../components/AuthForm';
 import { useAuth } from '../context/AuthContext';
 
 export const AuthPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();  // Make sure signup is provided in AuthContext
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -28,8 +28,21 @@ export const AuthPage: React.FC = () => {
     }
   };
 
-  const handleSignUp = (email: string, password: string) => {
-    setError('Sign-up not implemented.');
+  const handleSignUp = async (email: string, password: string) => {
+    try {
+      setError(null);
+      setLoading(true);
+      const success = await signup(email, password); // Using signup from AuthContext
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Registration failed.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

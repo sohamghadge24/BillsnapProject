@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Expense } from '../types/expense';
 import { formatCurrency, getCategoryColor } from '../utils/helpers';
-
-interface BudgetAllocation {
-  category: string;
-  budgetAmount: number;
-  percentage: number;
-}
+import { useAuth } from '../context/AuthContext';
 
 interface CategorySpending {
   category: string;
@@ -50,7 +45,18 @@ const DEFAULT_PERCENTAGES: Record<string, number> = {
 export const Budget: React.FC<BudgetProps> = ({ expenses }) => {
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [categorySpending, setCategorySpending] = useState<CategorySpending[]>([]);
+  const { currentUserDetails } = useAuth();
 
+  // Set monthly income from user profile
+  useEffect(() => {
+    const income = currentUserDetails?.profile?.monthlyIncome;
+    console.log(income)
+    if (income && income > 0) {
+      setMonthlyIncome(income);
+    }
+  }, [currentUserDetails]);
+
+  // Calculate category spending
   useEffect(() => {
     if (monthlyIncome > 0) {
       const spending: CategorySpending[] = DEFAULT_CATEGORIES.map(category => {
@@ -91,10 +97,9 @@ export const Budget: React.FC<BudgetProps> = ({ expenses }) => {
       case 'under':
         return 'bg-green-300 bg-opacity-30 text-green-800 border-green-400';
       case 'near':
-        return 'bg-yellow-200 bg-opacity-30  text-yellow-800 border-yellow-400';
+        return 'bg-yellow-200 bg-opacity-30 text-yellow-800 border-yellow-400';
       case 'over':
         return 'bg-red-300 bg-opacity-30 text-red-800 border border-red-300';
-
     }
   };
 
@@ -102,17 +107,17 @@ export const Budget: React.FC<BudgetProps> = ({ expenses }) => {
     <div className="space-y-6 p-6">
       <div className='flex items-center justify-between'>
         <div>
-            <h2 className="text-2xl font-bold">Budget Overview</h2>
-            <p className="text-gray-600">Enter your monthly income to view actual vs. budgeted spending.</p>
-            <input
+          <h2 className="text-2xl font-bold">Budget Overview</h2>
+          <p className="text-gray-600">Enter your monthly income to view actual vs. budgeted spending.</p>
+          <input
             type="number"
             value={monthlyIncome}
             onChange={(e) => setMonthlyIncome(parseFloat(e.target.value))}
             className="mt-4 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your monthly income"
-            />
+          />
+          
         </div>
-        
       </div>
 
       {categorySpending.length > 0 && (

@@ -1,3 +1,4 @@
+// File: src/services/FirebaseService.ts
 import {
   collection,
   addDoc,
@@ -14,18 +15,26 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
 import { Expense } from '../types/expense';
+import { getAuth } from 'firebase/auth';
 
 const EXPENSES_COLLECTION = 'expenses';
 
 export class FirebaseService {
-  static async addExpense(userId: string, expense: Omit<Expense, 'id'>): Promise<string> {
+  /** Add a new expense */
+  static async addExpense(expense: Omit<Expense, 'id' | 'userId'>): Promise<string> {
     try {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+
       const docRef = await addDoc(collection(db, EXPENSES_COLLECTION), {
         ...expense,
-        userId,
+        userId: auth.currentUser.uid,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
       });
+
       return docRef.id;
     } catch (error) {
       console.error('Error adding expense:', error);
@@ -33,11 +42,17 @@ export class FirebaseService {
     }
   }
 
-  static async getExpenses(userId: string): Promise<Expense[]> {
+  /** Get all expenses for the current user */
+  static async getExpenses(): Promise<Expense[]> {
     try {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
+
       const q = query(
         collection(db, EXPENSES_COLLECTION),
-        where('userId', '==', userId),
+        where('userId', '==', auth.currentUser.uid),
         orderBy('date', 'desc')
       );
       const querySnapshot = await getDocs(q);
@@ -51,7 +66,38 @@ export class FirebaseService {
     }
   }
 
-  static subscribeToExpenses(userId: string, callback: (expenses: Expense[]) => void) {
+  /**
+   * Subscribe to expenses.
+   * Usage:
+   *    subscribeToExpenses((expenses) => {...}) // for current user
+   *    subscribeToExpenses(userId, (expenses) => {...}) // for specific user
+   */
+  static subscribeToExpenses(
+    userIdOrCallback: string | ((expenses: Expense[]) => void),
+    maybeCallback?: (expenses: Expense[]) => void
+  ) {
+    let userId: string;
+    let callback: (expenses: Expense[]) => void;
+
+    // If the first argument is a function, use currentUser
+    if (typeof userIdOrCallback === 'function') {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        console.error('User not authenticated');
+        return () => {};
+      }
+      userId = auth.currentUser.uid;
+      callback = userIdOrCallback;
+    }
+    // If the first argument is a string, treat it as userId
+    else if (typeof userIdOrCallback === 'string' && typeof maybeCallback === 'function') {
+      userId = userIdOrCallback;
+      callback = maybeCallback;
+    } else {
+      console.error('Invalid arguments passed to subscribeToExpenses');
+      return () => {};
+    }
+
     const q = query(
       collection(db, EXPENSES_COLLECTION),
       where('userId', '==', userId),
@@ -67,6 +113,7 @@ export class FirebaseService {
     });
   }
 
+  /** Update an expense */
   static async updateExpense(expenseId: string, updates: Partial<Expense>): Promise<void> {
     try {
       const expenseRef = doc(db, EXPENSES_COLLECTION, expenseId);
@@ -80,6 +127,7 @@ export class FirebaseService {
     }
   }
 
+  /** Delete an expense */
   static async deleteExpense(expenseId: string): Promise<void> {
     try {
       await deleteDoc(doc(db, EXPENSES_COLLECTION, expenseId));
@@ -89,24 +137,28 @@ export class FirebaseService {
     }
   }
 
-  static async uploadTempReceipt(file: File, userId: string): Promise<string> {
-  try {
-    const timestamp = Date.now();
-    const filePath = `receipts/${userId}/temp_${timestamp}_${file.name}`;
-    const storageRef = ref(storage, filePath);
+  /** Upload a temporary receipt to Firebase Storage */
+  static async uploadTempReceipt(file: File): Promise<string> {
+    try {
+      const auth = getAuth();
+      if (!auth.currentUser) throw new Error('User not authenticated');
 
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
+      const timestamp = Date.now();
+      const filePath = `receipts/${auth.currentUser.uid}/temp_${timestamp}_${file.name}`;
+      const storageRef = ref(storage, filePath);
 
-    console.log('📷 Temp receipt uploaded:', downloadURL);
-    return downloadURL;
-  } catch (error) {
-    console.error('❌ Error uploading temp receipt:', error);
-    throw error;
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log('📷 Temp receipt uploaded:', downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error('❌ Error uploading temp receipt:', error);
+      throw error;
+    }
   }
-}
 
-
+  /** Placeholder for OCR extraction */
   static async extractDataFromImage(file: File): Promise<any> {
     console.warn("OCR is not implemented in this method. Use a Cloud Function or Tesseract.js.");
     return {

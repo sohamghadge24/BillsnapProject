@@ -1,59 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import { Header } from './components/public/headerPage';
+import { Footer } from './components/public/footerPage';
+import { HomePage } from './components/public/HomePage';
+import { AboutPage } from './components/public/Aboutpage';
+import { PricingPage } from './components/public/PricePage';
+import { ContactPage } from './components/public/ContactPage';
+import { LoginPage } from './components/Auth/Login';
+import { RegisterPage } from './components/Auth/Register';
 import { Dashboard } from './components/Dashboard';
 import { ExpenseList } from './components/ExpenseList';
 import { Scanner } from './components/Scanner';
 import { Reports } from './components/Reports';
 import { Navigation } from './components/Navigation';
 import { AddExpenseModal } from './components/AddExpenseModal';
-import { AuthForm } from './components/AuthForm';
 import { Expense } from './types/expense';
 import { FirebaseService } from './services/firebaseService';
 import { useAuth } from './context/AuthContext';
+import { PublicView, AppView } from './types/navigation';
+import { Budget } from './components/Budget';
 import Profile from './domo file/profile';
-import Login from './components/Login';
-import Register from './components/Register';
-import {Budget} from './components/Budget';
-
-import { Routes, Route } from 'react-router-dom';
-
-export type View = 'dashboard' | 'expenses' | 'scanner' | 'reports' | 'profile' | 'Budget';
+import { ProfileQuestionsPage } from './components/ProfileQuestionsPage';
 
 function App() {
-  const {
-    currentUser,
-    currentUserDetails,
-    loading,
-    login,
-    logout,
-  } = useAuth();
-
-  const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const { currentUser, loading, login, signup, logout } = useAuth();
+  const [currentPublicView, setCurrentPublicView] = useState<PublicView>('home');
+  const [currentAppView, setCurrentAppView] = useState<AppView>('dashboard');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [expensesLoading, setExpensesLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    let unsubscribe: () => void;
-
     if (currentUser) {
       setExpensesLoading(true);
-      unsubscribe = FirebaseService.subscribeToExpenses(currentUser.uid, (updatedExpenses) => {
+      const unsubscribe = FirebaseService.subscribeToExpenses(currentUser.uid, (updatedExpenses) => {
         setExpenses(updatedExpenses);
         setExpensesLoading(false);
       });
+      return () => unsubscribe();
     } else {
       setExpenses([]);
     }
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
   }, [currentUser]);
 
   const addExpense = async (expense: Omit<Expense, 'id'>) => {
     if (!currentUser) return;
-
     try {
       await FirebaseService.addExpense(currentUser.uid, expense);
     } catch (error) {
@@ -78,17 +69,61 @@ function App() {
   };
 
   if (!currentUser && !loading) {
+    const renderPublicView = () => {
+      switch (currentPublicView) {
+        case 'home':
+          return <HomePage onViewChange={setCurrentPublicView} />;
+        case 'about':
+          return <AboutPage />;
+        case 'pricing':
+          return <PricingPage onViewChange={setCurrentPublicView} />;
+        case 'contact':
+          return <ContactPage />;
+        case 'login':
+          return (
+            <LoginPage
+              onLogin={login}
+              onViewChange={setCurrentPublicView}
+              loading={loading}
+              error={null}
+            />
+          );
+        case 'register':
+          return (
+            <RegisterPage
+              onRegister={signup}
+              onViewChange={(view) => {
+                // if registration is done, send them to profileQuestions in AppView
+                if (view === 'profileQuestions') {
+                  setCurrentAppView('profileQuestions');
+                } else {
+                  setCurrentPublicView(view as PublicView);
+                }
+              }}
+              loading={loading}
+              error={null}
+            />
+          );
+        default:
+          return <HomePage onViewChange={setCurrentPublicView} />;
+      }
+    };
+
     return (
-      <AuthForm
-        onSignIn={login}
-        onSignUp={login}
-        loading={loading}
-        error={null}
-      />
+      <div className="min-h-screen flex flex-col">
+        <Header
+          currentView={currentPublicView}
+          onViewChange={setCurrentPublicView}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+        <main className="flex-1">{renderPublicView()}</main>
+        <Footer />
+      </div>
     );
   }
 
-  if (loading || !currentUserDetails) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -111,7 +146,7 @@ function App() {
       );
     }
 
-    switch (currentView) {
+    switch (currentAppView) {
       case 'dashboard':
         return <Dashboard expenses={expenses} />;
       case 'expenses':
@@ -126,11 +161,12 @@ function App() {
         return <Scanner onAddExpense={addExpense} />;
       case 'reports':
         return <Reports expenses={expenses} />;
-      case 'profile':
-        return <Profile expenses={expenses} monthlyIncome={monthlyIncome} />;
-
       case 'Budget':
         return <Budget expenses={expenses} />;
+      case 'profile':
+        return <Profile expenses={expenses} />;
+      case 'profileQuestions':
+        return <ProfileQuestionsPage onComplete={() => setCurrentAppView('dashboard')} />;
       default:
         return <Dashboard expenses={expenses} />;
     }
@@ -139,27 +175,20 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation
-        currentView={currentView}
-        onViewChange={setCurrentView}
+        currentView={currentAppView}
+        onViewChange={setCurrentAppView}
         onAddExpense={() => setIsAddModalOpen(true)}
         onLogout={logout}
-        userEmail={currentUserDetails?.email}
+        userEmail={currentUser?.email || undefined}
       />
-
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         {renderCurrentView()}
       </main>
-
       <AddExpenseModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddExpense={addExpense}
       />
-
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-      </Routes>
     </div>
   );
 }
